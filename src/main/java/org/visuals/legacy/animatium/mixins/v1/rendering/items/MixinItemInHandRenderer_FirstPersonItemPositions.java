@@ -220,8 +220,8 @@ public abstract class MixinItemInHandRenderer_FirstPersonItemPositions {
             }
 
             if (AnimatiumConfig.instance().items.skullPosition && ItemUtilKt.isSkullBlock(itemStack) && !AnimatiumConfig.instance().items.mobHeadIcons) {
-                if (AnimatiumConfig.instance().extras.applyToBlockItems) {
-                    final ExtrasConfigCategory extras = AnimatiumConfig.instance().extras;
+                final ExtrasConfigCategory extras = AnimatiumConfig.instance().extras;
+                if (extras.applyCustomizationToBlockItems) {
                     poseStack.translate(extras.itemOffsetX * 0.05F, extras.itemOffsetY * 0.05F, extras.itemOffsetZ * 0.05F);
                 }
                 poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
@@ -229,14 +229,14 @@ public abstract class MixinItemInHandRenderer_FirstPersonItemPositions {
 
                 // TODO: This is not quite right... (@Mixces)
                 poseStack.mulPose(Axis.YP.rotationDegrees(-180.0F));
-                if (!AnimatiumConfig.instance().extras.applyToBlockItems) {
+                if (!AnimatiumConfig.instance().extras.applyCustomizationToBlockItems) {
                     poseStack.translate(0.0F, 0.25F, 0.0F);
                 }
                 poseStack.scale(1.125F, 1.125F, 1.125F);
             }
 
             final ExtrasConfigCategory extras = AnimatiumConfig.instance().extras;
-            if (isNotBlock3d || AnimatiumConfig.instance().extras.applyToBlockItems) {
+            if (isNotBlock3d || AnimatiumConfig.instance().extras.applyCustomizationToBlockItems) {
                 if (AnimatiumConfig.instance().items.fishingRodVersion == FishingRodVersionSetting.V1_7 && ItemUtilKt.isFishingRodItem(itemStack)) {
                     poseStack.translate(extras.itemOffsetX * -0.05F, extras.itemOffsetY * 0.05F, extras.itemOffsetZ * 0.05F);
                 } else if (!(AnimatiumConfig.instance().items.skullPosition && ItemUtilKt.isSkullBlock(itemStack) && !AnimatiumConfig.instance().items.mobHeadIcons)) {
@@ -271,7 +271,7 @@ public abstract class MixinItemInHandRenderer_FirstPersonItemPositions {
     @ModifyArg(method = "submitHandsWithItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V", ordinal = 0), index = 5)
     private ItemStack animatium$useCopyStackFieldForRender(final ItemStack original) {
         // TODO/NOTE: 26.2 makes the item persist in hand even when empty (temp check added)
-        if (Animatium.isEnabled() && AnimatiumConfig.instance().items.equipAnimationVersion != EquipAnimationVersionSetting.VANILLA && AnimatiumConfig.instance().items.equipAnimationVersion != EquipAnimationVersionSetting.DISABLED && !original.isEmpty()) {
+        if (!Animatium.isEnabled() || AnimatiumConfig.instance().items.equipAnimationVersion.useStackForRendering() && !original.isEmpty()) {
             // Use our copied stack field for hand animations
             return this.animatium$mainHandItem;
         } else {
@@ -281,11 +281,11 @@ public abstract class MixinItemInHandRenderer_FirstPersonItemPositions {
 
     @ModifyExpressionValue(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;shouldInstantlyReplaceVisibleItem(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z", ordinal = 0))
     private boolean animatium$disableEquipConstraint(final boolean original) {
-        return (!Animatium.isEnabled() || AnimatiumConfig.instance().items.equipAnimationVersion == EquipAnimationVersionSetting.VANILLA || AnimatiumConfig.instance().items.equipAnimationVersion == EquipAnimationVersionSetting.DISABLED) && original;
+        return (!Animatium.isEnabled() || !AnimatiumConfig.instance().items.equipAnimationVersion.useStackForRendering()) && original;
     }
 
     @Inject(method = "shouldInstantlyReplaceVisibleItem", at = @At("HEAD"), cancellable = true)
-    private void animatium$skipEquipAnimation(ItemStack currentlyVisibleItem, ItemStack expectedItem, CallbackInfoReturnable<Boolean> cir) {
+    private void animatium$skipEquipAnimation(final ItemStack currentlyVisibleItem, final ItemStack expectedItem, CallbackInfoReturnable<Boolean> cir) {
         if (Animatium.isEnabled() && AnimatiumConfig.instance().items.equipAnimationVersion == EquipAnimationVersionSetting.DISABLED && this.minecraft.player != null) {
             cir.setReturnValue(true);
         }
