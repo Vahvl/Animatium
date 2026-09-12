@@ -34,6 +34,6 @@ enum class EquipAnimationVersionSetting {
     DISABLED;
 
     fun useStackForRendering(): Boolean {
-        return !(AnimatiumConfig.instance().items.equipAnimationVersion == VANILLA || AnimatiumConfig.instance().items.equipAnimationVersion == DISABLED)
+        return !(this == VANILLA || this == DISABLED)
     }
 }
