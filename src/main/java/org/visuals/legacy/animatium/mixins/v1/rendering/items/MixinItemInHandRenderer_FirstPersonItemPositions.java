@@ -29,6 +29,7 @@ import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -117,22 +118,16 @@ public abstract class MixinItemInHandRenderer_FirstPersonItemPositions {
         }
     }
 
-     @Inject(method = "swingArm", at = @At("HEAD"), cancellable = true)
-     private void animatium$disableSwingPivot(float attack, PoseStack poseStack, int invert, HumanoidArm arm, CallbackInfo ci) {
-        if (!Animatium.isEnabled() || !AnimatiumConfig.instance().extras.disableSwingPivot) return;
-        ci.cancel();
+     @WrapMethod(method = "applyItemArmAttackTransform")
+     private void animatium$disableSwingPivot(PoseStack poseStack, HumanoidArm arm, float attackValue, Operation<Void> original) {
+        if (!Animatium.isEnabled() || !AnimatiumConfig.instance().extras.disableSwingPivot) {
+            original.call(poseStack, arm, attackValue);
+            return;
+        }
         final ExtrasConfigCategory extras = AnimatiumConfig.instance().extras;
-        float ySwingRotation = Mth.sin(attack * attack * (float) Math.PI);
-        float xzSwingRotation = Mth.sin(Mth.sqrt(attack) * (float) Math.PI);
-
-        Quaternionf rotation = new Quaternionf();
-
-        rotation.mul(Axis.YP.rotationDegrees(invert * (45.0F + ySwingRotation * -20.0F)));
-        rotation.mul(Axis.ZP.rotationDegrees(invert * xzSwingRotation * -20.0F));
-        rotation.mul(Axis.XP.rotationDegrees(xzSwingRotation * -80.0F));
-        rotation.mul(Axis.YP.rotationDegrees(invert * -45.0F));
-
-        poseStack.rotateAround(rotation,extras.itemOffsetX * 0.05F,extras.itemOffsetY * 0.05F,extras.itemOffsetZ * 0.05F);
+        poseStack.translate(extras.itemOffsetX * 0.05F,extras.itemOffsetY * 0.05F,extras.itemOffsetZ * 0.05F);
+        original.call(poseStack, arm, attackValue);
+        poseStack.translate(extras.itemOffsetX * -0.05F,extras.itemOffsetY * -0.05F,extras.itemOffsetZ * -0.05F);
      }
 
     @WrapOperation(method = "submitArmWithItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;isUsingItem()Z"))
