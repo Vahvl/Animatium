@@ -148,7 +148,7 @@ public final class ExtrasConfigCategory extends Category {
                 .booleanEntry("alwaysUsageSwing")
                 .booleanEntry("fakeMissPenaltySwing")
                 .booleanEntry("disableSwingTranslate")
-                .booleanEntry("disableSwingPivot");
+                .booleanEntry("disableSwingPivot")
                 .booleanEntry("legacySwingAnimation");
 
         bundle.group("item_modifications")
